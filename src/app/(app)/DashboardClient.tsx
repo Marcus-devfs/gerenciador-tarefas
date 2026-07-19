@@ -4,11 +4,13 @@ import { useState, useMemo, useRef } from "react";
 import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNotasQuery, useCreateNota, useUpdateNota, useDeleteNota } from "@/hooks/useNotas";
+import { useSettingsQuery } from "@/hooks/useSettings";
+import { buildHoursSummary, resolveHorasContratadasMes } from "@/lib/operationalReportMetrics";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import {
   CheckCircle2, Clock, ListTodo, AlertCircle, TrendingUp, Loader2,
   Plus, X, Save, Trash2, Pencil, ChevronDown, ChevronUp,
-  Bell, CalendarDays, BookOpen,
+  Bell, CalendarDays, BookOpen, Timer, AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import ExportButtons from "@/components/export/ExportButtons";
@@ -359,6 +361,7 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
   const { data: allTasks = [], isLoading } = useTasksQuery();
   const { isTeamLeader, canViewTeam, teamLabel } = useUserRole(isAdmin);
   const { data: notas = [] } = useNotasQuery();
+  const { data: settings } = useSettingsQuery();
   const deleteNota = useDeleteNota();
   const exportRef = useRef<HTMLDivElement>(null);
 
@@ -377,6 +380,8 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
   const avgProgress = total > 0
     ? Math.round(visibleTasks.reduce((acc, t) => acc + t.progress, 0) / total)
     : 0;
+
+  const hoursSummary = buildHoursSummary(visibleTasks, resolveHorasContratadasMes(settings));
 
   const recentTasks = [...visibleTasks]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -457,6 +462,74 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
         <MetricCard label="Em andamento" value={inProgress} icon={Clock} color="bg-blue-500" />
         <MetricCard label="Concluídas" value={done} icon={CheckCircle2} color="bg-brand-500" sub={`${avgProgress}% de progresso médio`} />
       </div>
+
+      {/* Horas contratadas do mês */}
+      {hoursSummary.horasContratadas !== undefined && (
+        <Link href="/relatorios" className="block">
+          <div className="bg-white rounded-xl border border-surface-200 p-4 hover:border-brand-400/50 hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Timer size={15} className="text-brand-600" />
+                <span className="text-sm font-semibold text-surface-700">Horas contratadas (mês)</span>
+              </div>
+              <span className="text-[11px] text-brand-500 font-medium">Ver relatório →</span>
+            </div>
+
+            <div className="flex h-2 rounded-full overflow-hidden bg-surface-100 mb-3">
+              <div
+                className="h-full"
+                style={{
+                  width: `${Math.min(100, (hoursSummary.horasFeitas / hoursSummary.horasContratadas) * 100)}%`,
+                  background: hoursSummary.alertLevel === "excedido" ? "#dc2626" : hoursSummary.alertLevel === "atencao" ? "#d97706" : "#f39519",
+                }}
+              />
+              <div
+                className="h-full bg-[#fcd9a8]"
+                style={{
+                  width: `${Math.min(100 - (hoursSummary.horasFeitas / hoursSummary.horasContratadas) * 100, (hoursSummary.horasAlocadas / hoursSummary.horasContratadas) * 100)}%`,
+                }}
+              />
+            </div>
+
+            <div className="flex gap-6">
+              <div>
+                <p className="text-lg font-bold text-surface-900">{hoursSummary.horasFeitas}h</p>
+                <p className="text-[11px] text-surface-400">Feitas</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-amber-600">{hoursSummary.horasAlocadas}h</p>
+                <p className="text-[11px] text-surface-400">Alocadas</p>
+              </div>
+              <div>
+                <p className={`text-lg font-bold ${
+                  hoursSummary.alertLevel === "excedido" ? "text-red-600" :
+                  hoursSummary.alertLevel === "atencao" ? "text-amber-600" : "text-blue-600"
+                }`}>{hoursSummary.horasRestantes}h</p>
+                <p className="text-[11px] text-surface-400">Restantes</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-surface-900">{hoursSummary.horasContratadas}h</p>
+                <p className="text-[11px] text-surface-400">Contratadas</p>
+              </div>
+            </div>
+
+            {hoursSummary.alertLevel !== "ok" && (
+              <div className={`mt-3 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] ${
+                hoursSummary.alertLevel === "excedido"
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : "bg-amber-50 border-amber-200 text-amber-700"
+              }`}>
+                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                <span>
+                  {hoursSummary.alertLevel === "excedido"
+                    ? `Horas contratadas ultrapassadas em ${hoursSummary.horasComprometidas - hoursSummary.horasContratadas}h.`
+                    : `${hoursSummary.percentual}% das horas contratadas já comprometidas (feitas + alocadas).`}
+                </span>
+              </div>
+            )}
+          </div>
+        </Link>
+      )}
 
       {/* Charts (gestor/admin) or progress bar (personal) */}
       {canViewTeam && <DashboardCharts tasks={visibleTasks} showCollaboratorChart={isTeamLeader} />}

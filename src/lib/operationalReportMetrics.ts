@@ -14,6 +14,8 @@ export type HoursAlertLevel = "ok" | "atencao" | "excedido";
 export interface HoursSummary {
   horasContratadas?: number;
   horasFeitas: number;
+  horasAlocadas: number;
+  horasComprometidas: number;
   horasRestantes?: number;
   percentual?: number;
   alertLevel?: HoursAlertLevel;
@@ -120,17 +122,27 @@ export function buildHoursSummary(
     .filter((t) => isTaskDeliveredThisMonth(t, ref))
     .reduce((sum, t) => sum + (t.tempoPrevisto ?? t.tempoEstimado ?? 0), 0);
 
+  // Horas já alocadas em tarefas pendentes/em andamento (ainda não concluídas) —
+  // representam compromisso já assumido, mesmo sem o trabalho ter terminado.
+  const horasAlocadas = tasks
+    .filter((t) => t.status === "pendente" || t.status === "em_andamento")
+    .reduce((sum, t) => sum + (t.tempoPrevisto ?? t.tempoEstimado ?? 0), 0);
+
+  const horasComprometidas = horasFeitas + horasAlocadas;
+
   if (horasContratadasMes === undefined || horasContratadasMes === null) {
-    return { horasFeitas };
+    return { horasFeitas, horasAlocadas, horasComprometidas };
   }
 
-  const horasRestantes = Math.max(0, horasContratadasMes - horasFeitas);
-  const percentual = horasContratadasMes > 0 ? Math.round((horasFeitas / horasContratadasMes) * 100) : 0;
+  const horasRestantes = Math.max(0, horasContratadasMes - horasComprometidas);
+  const percentual = horasContratadasMes > 0 ? Math.round((horasComprometidas / horasContratadasMes) * 100) : 0;
   const alertLevel: HoursAlertLevel = percentual >= 100 ? "excedido" : percentual >= 85 ? "atencao" : "ok";
 
   return {
     horasContratadas: horasContratadasMes,
     horasFeitas,
+    horasAlocadas,
+    horasComprometidas,
     horasRestantes,
     percentual,
     alertLevel,
@@ -221,7 +233,7 @@ function buildHoursEmailLines(hours: HoursSummary): string[] {
         ? " ⚠ perto do limite mensal"
         : "";
   return [
-    `• Horas do mês: ${hours.horasFeitas}h feitas de ${hours.horasContratadas}h contratadas (restam ${hours.horasRestantes}h)${alertText}`,
+    `• Horas do mês: ${hours.horasFeitas}h feitas + ${hours.horasAlocadas}h alocadas em tarefas abertas = ${hours.horasComprometidas}h de ${hours.horasContratadas}h contratadas (restam ${hours.horasRestantes}h)${alertText}`,
   ];
 }
 

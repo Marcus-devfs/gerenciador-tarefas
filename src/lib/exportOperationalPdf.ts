@@ -39,6 +39,7 @@ function drawKpiGrid(pdf: jsPDF, metrics: OperationalReportMetrics, startY: numb
       ? [
           { label: "Horas contratadas (mês)", value: `${hoursSummary.horasContratadas}h` },
           { label: "Horas feitas (mês)", value: `${hoursSummary.horasFeitas}h` },
+          { label: "Horas alocadas (abertas)", value: `${hoursSummary.horasAlocadas}h` },
           { label: "Horas restantes (mês)", value: `${hoursSummary.horasRestantes}h`, color: restantesColor },
         ]
       : []),

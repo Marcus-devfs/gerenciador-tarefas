@@ -127,6 +127,84 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
         <KpiCard label="Total previsto" value={`${totalPrev}h`} sub={totalPrev > totalEst ? `+${totalPrev - totalEst}h acima do estimado` : undefined} icon={Timer} accent={totalPrev > totalEst ? "bg-amber-500" : "bg-brand-500"} />
       </div>
 
+      {/* Horas contratadas — indicador principal para consultoria e gestor */}
+      <div className="bg-white rounded-xl border border-surface-200 p-5">
+        <SectionTitle>Horas contratadas (mês)</SectionTitle>
+        {hoursSummary.horasContratadas === undefined ? (
+          <div className="mt-3 flex flex-col items-center justify-center text-center py-8">
+            <Timer size={22} className="text-surface-300 mb-2" />
+            <p className="text-xs text-surface-400 max-w-[260px]">
+              Defina suas horas contratadas em{" "}
+              <Link href="/configuracoes" className="text-brand-600 font-medium hover:text-brand-700">
+                Configurações
+              </Link>{" "}
+              para acompanhar o consumo mensal.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-5 items-center mt-3">
+              <ResponsiveContainer width="100%" height={190}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Feitas", value: hoursSummary.horasFeitas },
+                      { name: "Alocadas em tarefas abertas", value: hoursSummary.horasAlocadas },
+                      { name: "Restantes", value: hoursSummary.horasRestantes ?? 0 },
+                    ]}
+                    cx="50%" cy="50%" innerRadius={55} outerRadius={80} startAngle={90} endAngle={-270}
+                    paddingAngle={2} dataKey="value"
+                  >
+                    <Cell fill={
+                      hoursSummary.alertLevel === "excedido" ? "#dc2626" :
+                      hoursSummary.alertLevel === "atencao" ? "#d97706" : "#f39519"
+                    } />
+                    <Cell fill="#fcd9a8" />
+                    <Cell fill="#e2e8f0" />
+                  </Pie>
+                  <Tooltip formatter={(v) => [`${v}h`, ""]} />
+                </PieChart>
+              </ResponsiveContainer>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KpiCard label="Feitas" value={`${hoursSummary.horasFeitas}h`} icon={CheckCircle2} accent="bg-brand-500" />
+                <KpiCard label="Alocadas (abertas)" value={`${hoursSummary.horasAlocadas}h`} icon={Clock} accent="bg-amber-500" />
+                <KpiCard
+                  label="Restantes"
+                  value={`${hoursSummary.horasRestantes}h`}
+                  icon={AlertTriangle}
+                  accent={
+                    hoursSummary.alertLevel === "excedido" ? "bg-red-500" :
+                    hoursSummary.alertLevel === "atencao" ? "bg-amber-500" : "bg-blue-500"
+                  }
+                />
+                <KpiCard label="Contratadas" value={`${hoursSummary.horasContratadas}h`} icon={Timer} accent="bg-surface-500" />
+              </div>
+            </div>
+
+            <p className="text-[11px] text-surface-400 mt-3">
+              &quot;Alocadas&quot; são as horas previstas de tarefas ainda pendentes ou em andamento —
+              já comprometidas, mesmo sem terem sido concluídas.
+            </p>
+
+            {hoursSummary.alertLevel !== "ok" && (
+              <div className={`mt-3 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] ${
+                hoursSummary.alertLevel === "excedido"
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : "bg-amber-50 border-amber-200 text-amber-700"
+              }`}>
+                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                <span>
+                  {hoursSummary.alertLevel === "excedido"
+                    ? `Horas contratadas ultrapassadas em ${hoursSummary.horasComprometidas - hoursSummary.horasContratadas}h neste mês (considerando o que já foi feito + o que está alocado).`
+                    : `Já são ${hoursSummary.percentual}% das horas contratadas do mês comprometidas (feitas + alocadas). Pode ser hora de conversar sobre contratar mais horas.`}
+                </span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-surface-200 p-5">
@@ -177,88 +255,19 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
       )}
 
       {/* Charts row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <SectionTitle>Tempo estimado vs. previsto (h)</SectionTitle>
-          <ResponsiveContainer width="100%" height={220} className="mt-3">
-            <BarChart data={tempoData} barGap={4} barSize={10}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend iconSize={8} />
-              <Bar dataKey="estimado" name="Estimado" fill="#f39519" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="previsto" name="Previsto" fill="#f59e0b" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Horas contratadas do mês */}
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <SectionTitle>Horas contratadas (mês)</SectionTitle>
-          {hoursSummary.horasContratadas === undefined ? (
-            <div className="mt-3 flex flex-col items-center justify-center text-center py-8">
-              <Timer size={22} className="text-surface-300 mb-2" />
-              <p className="text-xs text-surface-400 max-w-[220px]">
-                Defina suas horas contratadas por mês em{" "}
-                <Link href="/configuracoes" className="text-brand-600 font-medium hover:text-brand-700">
-                  Configurações
-                </Link>{" "}
-                para acompanhar o consumo mensal.
-              </p>
-            </div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={190} className="mt-3">
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: "Feitas", value: Math.min(hoursSummary.horasFeitas, hoursSummary.horasContratadas) },
-                      { name: "Restantes", value: hoursSummary.horasRestantes ?? 0 },
-                    ]}
-                    cx="50%" cy="50%" innerRadius={55} outerRadius={80} startAngle={90} endAngle={-270}
-                    paddingAngle={2} dataKey="value"
-                  >
-                    <Cell fill={
-                      hoursSummary.alertLevel === "excedido" ? "#dc2626" :
-                      hoursSummary.alertLevel === "atencao" ? "#d97706" : "#f39519"
-                    } />
-                    <Cell fill="#e2e8f0" />
-                  </Pie>
-                  <Tooltip formatter={(v) => [`${v}h`, ""]} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                <div className="text-center">
-                  <p className="text-base font-bold text-surface-900">{hoursSummary.horasFeitas}h</p>
-                  <p className="text-[9px] text-surface-400 leading-tight">Feitas</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-bold text-surface-900">{hoursSummary.horasRestantes}h</p>
-                  <p className="text-[9px] text-surface-400 leading-tight">Restantes</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-bold text-surface-900">{hoursSummary.horasContratadas}h</p>
-                  <p className="text-[9px] text-surface-400 leading-tight">Contratadas</p>
-                </div>
-              </div>
-              {hoursSummary.alertLevel !== "ok" && (
-                <div className={`mt-3 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] ${
-                  hoursSummary.alertLevel === "excedido"
-                    ? "bg-red-50 border-red-200 text-red-700"
-                    : "bg-amber-50 border-amber-200 text-amber-700"
-                }`}>
-                  <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-                  <span>
-                    {hoursSummary.alertLevel === "excedido"
-                      ? `Horas contratadas ultrapassadas em ${hoursSummary.horasFeitas - hoursSummary.horasContratadas}h neste mês.`
-                      : `Você já usou ${hoursSummary.percentual}% das horas contratadas do mês.`}
-                  </span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+      <div className="bg-white rounded-xl border border-surface-200 p-5">
+        <SectionTitle>Tempo estimado vs. previsto (h)</SectionTitle>
+        <ResponsiveContainer width="100%" height={220} className="mt-3">
+          <BarChart data={tempoData} barGap={4} barSize={10}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip />
+            <Legend iconSize={8} />
+            <Bar dataKey="estimado" name="Estimado" fill="#f39519" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="previsto" name="Previsto" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Detailed table */}

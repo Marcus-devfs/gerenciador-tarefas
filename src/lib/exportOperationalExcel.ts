@@ -100,6 +100,7 @@ export async function exportOperationalExcel(
       ? ([
           ["Horas contratadas (mês)", `${metrics.hoursSummary.horasContratadas}h`],
           ["Horas feitas (mês)", `${metrics.hoursSummary.horasFeitas}h`],
+          ["Horas alocadas em tarefas abertas", `${metrics.hoursSummary.horasAlocadas}h`],
           ["Horas restantes (mês)", `${metrics.hoursSummary.horasRestantes}h`],
         ] as [string, string][])
       : []),
