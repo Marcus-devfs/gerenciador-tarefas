@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Trash2, Loader2, Users, FolderKanban, Save, Mail, PenLine, Lock, Clock } from "lucide-react";
 import { useProjectsQuery, useCreateProject, useDeleteProject } from "@/hooks/useProjects";
 import { useSettingsQuery, useUpdateSettings, useChangePassword } from "@/hooks/useSettings";
+import { getBusinessDaysInMonth } from "@/lib/operationalReportMetrics";
 
 interface Props {
   userEmail: string;
@@ -21,6 +22,7 @@ export default function ConfigClient({ userEmail, userName }: Props) {
   const [newProject, setNewProject] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
   const [managerName, setManagerName] = useState("");
+  const [horasContratadasDia, setHorasContratadasDia] = useState("");
   const [horasContratadasMes, setHorasContratadasMes] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,9 +34,18 @@ export default function ConfigClient({ userEmail, userName }: Props) {
     if (settings) {
       setManagerEmail(settings.managerEmail ?? "");
       setManagerName(settings.managerName ?? "");
+      setHorasContratadasDia(settings.horasContratadasDia?.toString() ?? "");
       setHorasContratadasMes(settings.horasContratadasMes?.toString() ?? "");
     }
   }, [settings]);
+
+  const businessDaysThisMonth = useMemo(() => getBusinessDaysInMonth(new Date()), []);
+  const horasDiaNum = Number(horasContratadasDia);
+  const horasMesCalculado =
+    horasContratadasDia.trim() !== "" && Number.isFinite(horasDiaNum) && horasDiaNum >= 0
+      ? Math.round(horasDiaNum * businessDaysThisMonth * 100) / 100
+      : null;
+  const mesAtualLabel = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
   async function handleAddProject(e: React.FormEvent) {
     e.preventDefault();
@@ -57,6 +68,7 @@ export default function ConfigClient({ userEmail, userName }: Props) {
   async function handleSaveHoras(e: React.FormEvent) {
     e.preventDefault();
     await updateSettings.mutateAsync({
+      horasContratadasDia: horasContratadasDia.trim() === "" ? null : Number(horasContratadasDia),
       horasContratadasMes: horasContratadasMes.trim() === "" ? null : Number(horasContratadasMes),
     });
     setHorasSaved(true);
@@ -213,8 +225,9 @@ export default function ConfigClient({ userEmail, userName }: Props) {
           <h2 className="text-sm font-bold text-surface-700">Horas contratadas</h2>
         </div>
         <p className="text-xs text-surface-500 leading-relaxed">
-          Informe quantas horas mensais você tem contratadas. No report semanal de{" "}
-          <strong>Relatórios</strong>, você verá quantas horas já fez no mês, quantas restam,
+          Informe quantas horas você tem contratadas por dia útil — o sistema calcula
+          automaticamente o total do mês com base nos dias úteis de cada mês. No report semanal de{" "}
+          <strong>Relatórios</strong>, você verá quantas horas já fez, quantas restam,
           e um alerta antes de ultrapassar o limite.
         </p>
 
@@ -225,20 +238,51 @@ export default function ConfigClient({ userEmail, userName }: Props) {
         ) : (
           <form onSubmit={handleSaveHoras} className="space-y-3 max-w-xs">
             <div>
-              <label className="text-xs font-medium text-surface-600 block mb-1.5">Horas contratadas por mês</label>
+              <label className="text-xs font-medium text-surface-600 block mb-1.5">Horas por dia útil</label>
               <div className="relative">
                 <Clock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
                 <input
                   type="number"
                   min={0}
-                  step={1}
-                  value={horasContratadasMes}
-                  onChange={(e) => setHorasContratadasMes(e.target.value)}
-                  placeholder="Ex: 160"
+                  step={0.5}
+                  value={horasContratadasDia}
+                  onChange={(e) => setHorasContratadasDia(e.target.value)}
+                  placeholder="Ex: 2"
                   className="w-full pl-8 pr-3 py-2 border border-surface-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
+              {horasMesCalculado !== null ? (
+                <p className="text-[11px] text-brand-600 mt-1.5">
+                  = {horasMesCalculado}h em {mesAtualLabel} ({businessDaysThisMonth} dias úteis)
+                </p>
+              ) : (
+                <p className="text-[11px] text-surface-400 mt-1.5">
+                  {businessDaysThisMonth} dias úteis em {mesAtualLabel}
+                </p>
+              )}
             </div>
+
+            <div>
+              <label className="text-xs font-medium text-surface-600 block mb-1.5">
+                Ou horas fixas por mês (opcional)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={horasContratadasMes}
+                onChange={(e) => setHorasContratadasMes(e.target.value)}
+                disabled={horasMesCalculado !== null}
+                placeholder="Ex: 160"
+                className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:opacity-50 disabled:bg-surface-50"
+              />
+              {horasMesCalculado !== null && (
+                <p className="text-[11px] text-surface-400 mt-1.5">
+                  Ignorado enquanto houver horas por dia preenchidas acima.
+                </p>
+              )}
+            </div>
+
             <div className="flex items-center gap-3">
               <button
                 type="submit"

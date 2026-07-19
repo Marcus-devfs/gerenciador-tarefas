@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { buildCollaboratorData, buildProjectData } from "@/lib/reportMetrics";
-import { buildHoursSummary } from "@/lib/operationalReportMetrics";
+import { buildHoursSummary, resolveHorasContratadasMes } from "@/lib/operationalReportMetrics";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid,
@@ -74,7 +74,8 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
 
   const projectData = buildProjectData(tasks);
   const collaboratorData = buildCollaboratorData(tasks);
-  const hoursSummary = buildHoursSummary(tasks, settings?.horasContratadasMes);
+  const horasContratadasMes = resolveHorasContratadasMes(settings);
+  const hoursSummary = buildHoursSummary(tasks, horasContratadasMes);
 
   const tempoData = tasks
     .filter((t) => t.tempoEstimado || t.tempoPrevisto)
@@ -106,7 +107,7 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
             reporterEmail={userEmail}
             managerEmail={settings?.managerEmail}
             managerName={settings?.managerName}
-            horasContratadasMes={settings?.horasContratadasMes}
+            horasContratadasMes={horasContratadasMes}
           />
           <ExportButtons tasks={tasks} exportRef={exportRef} filenamePrefix="relatorio" />
         </div>

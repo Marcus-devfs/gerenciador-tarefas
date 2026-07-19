@@ -38,6 +38,29 @@ export interface OperationalReportMetrics {
   hoursSummary: HoursSummary;
 }
 
+export function getBusinessDaysInMonth(date = new Date()): number {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let count = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dow = new Date(year, month, day).getDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+}
+
+export function resolveHorasContratadasMes(
+  settings: { horasContratadasDia?: number; horasContratadasMes?: number } | undefined,
+  ref = new Date(),
+): number | undefined {
+  if (!settings) return undefined;
+  if (settings.horasContratadasDia !== undefined && settings.horasContratadasDia !== null) {
+    return Math.round(settings.horasContratadasDia * getBusinessDaysInMonth(ref) * 100) / 100;
+  }
+  return settings.horasContratadasMes;
+}
+
 function parseDateOnly(dateStr: string): Date | null {
   const [y, m, d] = dateStr.split("-").map(Number);
   if (!y || !m || !d) return null;

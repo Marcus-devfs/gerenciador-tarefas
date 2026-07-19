@@ -25,6 +25,7 @@ export function useUpdateSettings() {
       emailSignatureImage?: string | null;
       emailSignatureImageMime?: string;
       horasContratadasMes?: number | null;
+      horasContratadasDia?: number | null;
     }) => {
       const res = await fetch("/api/settings", {
         method: "PUT",

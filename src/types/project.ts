@@ -17,6 +17,7 @@ export interface UserSettings {
   emailSignatureImage?: string;
   emailSignatureImageMime?: string;
   horasContratadasMes?: number;
+  horasContratadasDia?: number;
 }
 
 export interface UserSettingsResponse extends UserSettings {

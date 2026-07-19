@@ -6,7 +6,7 @@ import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-const EMAIL = process.env.SEED_ADMIN_EMAIL ?? "marcus.silva@gruporoncador.com.br";
+const EMAIL = process.env.SEED_ADMIN_EMAIL ?? "marcus.silva@melies.com.br";
 const NAME = process.env.SEED_ADMIN_NAME ?? "Marcus Silva";
 const URI = process.env.MONGODB_URI;
 
@@ -21,7 +21,7 @@ const now = new Date().toISOString();
 
 const client = new MongoClient(URI);
 await client.connect();
-const db = client.db("andamento-tarefas");
+const db = client.db();
 const usersCol = db.collection("users");
 const settingsCol = db.collection("user_settings");
 

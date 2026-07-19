@@ -114,6 +114,17 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    if (body.horasContratadasDia !== undefined) {
+      const horasDia = Number(body.horasContratadasDia);
+      if (body.horasContratadasDia === null || body.horasContratadasDia === "") {
+        $unset.horasContratadasDia = "";
+      } else if (!Number.isFinite(horasDia) || horasDia < 0) {
+        return NextResponse.json({ error: "Horas por dia inválidas" }, { status: 400 });
+      } else {
+        $set.horasContratadasDia = horasDia;
+      }
+    }
+
     if (body.emailSignatureImage !== undefined) {
       const imageData = typeof body.emailSignatureImage === "string" ? body.emailSignatureImage.trim() : "";
       if (imageData) {
