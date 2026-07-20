@@ -6,6 +6,7 @@ import type { Task, TaskStatus, TaskPriority, Subtask } from "@/types";
 import { CATEGORIES } from "@/types";
 import { useCreateTask, useUpdateTask } from "@/hooks/useTasks";
 import { useProjectsQuery } from "@/hooks/useProjects";
+import TimeInput from "./TimeInput";
 
 interface Props {
   task?: Task | null;
@@ -223,10 +224,10 @@ export default function TaskModal({ task, userId, userName, isAdmin, users, onCl
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tempo estimado">
-              <input type="number" min="0" step="0.5" value={tempoEstimado} onChange={(e) => setTempoEstimado(e.target.value)} className={INPUT} placeholder="Ex: 40" />
+              <TimeInput value={tempoEstimado} onChange={setTempoEstimado} inputClassName={INPUT} placeholder="Ex: 40" />
             </Field>
             <Field label="Tempo previsto">
-              <input type="number" min="0" step="0.5" value={tempoPrevisto} onChange={(e) => setTempoPrevisto(e.target.value)} className={INPUT} placeholder="Ex: 48" />
+              <TimeInput value={tempoPrevisto} onChange={setTempoPrevisto} inputClassName={INPUT} placeholder="Ex: 48" />
             </Field>
           </div>
 

@@ -12,6 +12,7 @@ import { useProjectsQuery } from "@/hooks/useProjects";
 import { useNotasQuery, useCreateNota } from "@/hooks/useNotas";
 import { NOTE_TYPE_COLOR, NOTE_TYPE_LABEL, DIAS_SEMANA } from "@/types/note";
 import type { NoteType } from "@/types/note";
+import TimeInput from "./TimeInput";
 
 // ── constants ────────────────────────────────────────────────────────
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
@@ -429,23 +430,21 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <p className="text-[10px] text-surface-400 mb-1">Estimado</p>
-                <input
-                  type="number" min="0" step="0.5"
+                <TimeInput
                   value={tempoEstimado}
-                  onChange={(e) => setTempoEstimado(e.target.value)}
+                  onChange={setTempoEstimado}
                   onBlur={() => save({ tempoEstimado: tempoEstimado ? Number(tempoEstimado) : undefined })}
-                  className="w-full text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                  inputClassName="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                   placeholder="ex: 40"
                 />
               </div>
               <div>
                 <p className="text-[10px] text-surface-400 mb-1">Previsto</p>
-                <input
-                  type="number" min="0" step="0.5"
+                <TimeInput
                   value={tempoPrevisto}
-                  onChange={(e) => setTempoPrevisto(e.target.value)}
+                  onChange={setTempoPrevisto}
                   onBlur={() => save({ tempoPrevisto: tempoPrevisto ? Number(tempoPrevisto) : undefined })}
-                  className={`w-full text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30 ${
+                  inputClassName={`text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30 ${
                     tempoPrevisto && tempoEstimado && Number(tempoPrevisto) > Number(tempoEstimado)
                       ? "border-amber-300 text-amber-700 bg-amber-50"
                       : "border-surface-200"
