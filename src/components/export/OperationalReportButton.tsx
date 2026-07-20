@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Loader2, Mail, Send } from "lucide-react";
+import { Copy, Download, ExternalLink, Loader2, Mail, Send } from "lucide-react";
 import Link from "next/link";
 import type { Task } from "@/types";
 import { buildOperationalEml } from "@/lib/buildOperationalEml";
@@ -16,7 +16,12 @@ import {
   buildReportFilenames,
   type OperationalReportContext,
 } from "@/lib/operationalReportMetrics";
-import { deliverOutlookClassicEml, tryShareFiles } from "@/lib/operationalReportDelivery";
+import { deliverOutlookClassicEml, downloadBlob, tryShareFiles } from "@/lib/operationalReportDelivery";
+
+interface ManualAttachment {
+  filename: string;
+  blob: Blob;
+}
 
 interface Props {
   tasks: Task[];
@@ -52,6 +57,9 @@ export default function OperationalReportButton({
   const [error, setError] = useState<string | null>(null);
   const [emlUrl, setEmlUrl] = useState<string | null>(null);
   const [emlFilename, setEmlFilename] = useState<string | null>(null);
+  const [manualAttachments, setManualAttachments] = useState<ManualAttachment[] | null>(null);
+  const [emailBodyText, setEmailBodyText] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const hasManager = Boolean(managerEmail?.trim());
   const isLoading = step !== "idle" && step !== "done";
@@ -62,6 +70,9 @@ export default function OperationalReportButton({
     if (emlUrl) URL.revokeObjectURL(emlUrl);
     setEmlUrl(null);
     setEmlFilename(null);
+    setManualAttachments(null);
+    setEmailBodyText(null);
+    setCopied(false);
 
     const context: OperationalReportContext = {
       reporterName,
@@ -120,6 +131,12 @@ export default function OperationalReportButton({
         const url = URL.createObjectURL(emlBlob);
         setEmlUrl(url);
         setEmlFilename(filenames.eml);
+        setManualAttachments([
+          { filename: filenames.excel, blob: excelBlob },
+          { filename: filenames.pdfIndicadores, blob: pdfIndicadoresBlob },
+          { filename: filenames.pdfRelatorio, blob: pdfRelatorioBlob },
+        ]);
+        setEmailBodyText(body);
       }
 
       setStep("done");
@@ -128,11 +145,11 @@ export default function OperationalReportButton({
         setMessage("Arquivos gerados e compartilhados com anexos via sistema.");
       } else if (hasManager) {
         setMessage(
-          "Arquivo .eml baixado. Abra no Outlook Classic (duplo clique) — deve abrir para edição e envio. Insira sua assinatura após \"Atenciosamente,\".",
+          "Arquivo .eml baixado. No Outlook Classic (duplo clique) ele abre pronto para edição e envio — insira sua assinatura após \"Atenciosamente,\". No Outlook novo (Mac/Windows) o .eml pode não abrir; use os anexos e o corpo abaixo para montar o e-mail manualmente.",
         );
       } else {
         setMessage(
-          "Arquivo .eml baixado. Configure o gestor em Configurações. Abra no Outlook para editar, inserir assinatura e enviar.",
+          "Arquivo .eml baixado. Configure o gestor em Configurações. Se o .eml não abrir no seu app de e-mail (ex: Outlook novo), use os anexos e o corpo abaixo para montar manualmente.",
         );
       }
     } catch (err) {
@@ -140,6 +157,13 @@ export default function OperationalReportButton({
       setError("Falha ao gerar o report operacional. Tente novamente.");
       setStep("idle");
     }
+  }
+
+  async function handleCopyBody() {
+    if (!emailBodyText) return;
+    await navigator.clipboard.writeText(emailBodyText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   }
 
   return (
@@ -175,6 +199,35 @@ export default function OperationalReportButton({
       )}
       {error && (
         <p className="text-[11px] text-red-500 max-w-[300px] text-right">{error}</p>
+      )}
+
+      {manualAttachments && (
+        <div className="w-full max-w-[300px] rounded-lg border border-surface-200 bg-surface-50 p-2.5 space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-400">
+            .eml não abriu? Monte manualmente
+          </p>
+          <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+            {manualAttachments.map((att) => (
+              <button
+                key={att.filename}
+                type="button"
+                onClick={() => downloadBlob(att.blob, att.filename)}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-surface-600 hover:text-brand-600"
+              >
+                <Download size={11} />
+                {att.filename}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyBody}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:text-brand-700"
+          >
+            <Copy size={11} />
+            {copied ? "Corpo copiado!" : "Copiar corpo do e-mail"}
+          </button>
+        </div>
       )}
 
 <button
