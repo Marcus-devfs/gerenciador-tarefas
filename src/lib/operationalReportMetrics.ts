@@ -40,6 +40,11 @@ export interface OperationalReportMetrics {
   hoursSummary: HoursSummary;
 }
 
+/** Rounds to 2 decimals to avoid floating-point artifacts (e.g. 6.0799999999999998) from summing hour fractions. */
+export function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export function getBusinessDaysInMonth(date = new Date()): number {
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -118,23 +123,23 @@ export function buildHoursSummary(
   horasContratadasMes: number | undefined,
   ref = new Date(),
 ): HoursSummary {
-  const horasFeitas = tasks
+  const horasFeitas = round2(tasks
     .filter((t) => isTaskDeliveredThisMonth(t, ref))
-    .reduce((sum, t) => sum + (t.tempoPrevisto ?? t.tempoEstimado ?? 0), 0);
+    .reduce((sum, t) => sum + (t.tempoPrevisto ?? t.tempoEstimado ?? 0), 0));
 
   // Horas já alocadas em tarefas pendentes/em andamento (ainda não concluídas) —
   // representam compromisso já assumido, mesmo sem o trabalho ter terminado.
-  const horasAlocadas = tasks
+  const horasAlocadas = round2(tasks
     .filter((t) => t.status === "pendente" || t.status === "em_andamento")
-    .reduce((sum, t) => sum + (t.tempoPrevisto ?? t.tempoEstimado ?? 0), 0);
+    .reduce((sum, t) => sum + (t.tempoPrevisto ?? t.tempoEstimado ?? 0), 0));
 
-  const horasComprometidas = horasFeitas + horasAlocadas;
+  const horasComprometidas = round2(horasFeitas + horasAlocadas);
 
   if (horasContratadasMes === undefined || horasContratadasMes === null) {
     return { horasFeitas, horasAlocadas, horasComprometidas };
   }
 
-  const horasRestantes = Math.max(0, horasContratadasMes - horasComprometidas);
+  const horasRestantes = round2(Math.max(0, horasContratadasMes - horasComprometidas));
   const percentual = horasContratadasMes > 0 ? Math.round((horasComprometidas / horasContratadasMes) * 100) : 0;
   const alertLevel: HoursAlertLevel = percentual >= 100 ? "excedido" : percentual >= 85 ? "atencao" : "ok";
 
@@ -166,8 +171,8 @@ export function buildOperationalReportMetrics(
   const pendente = tasks.filter((t) => t.status === "pendente").length;
   const cancelado = tasks.filter((t) => t.status === "cancelado").length;
   const taxaConclusao = total > 0 ? Math.round((concluido / total) * 100) : 0;
-  const totalEstimado = tasks.reduce((s, t) => s + (t.tempoEstimado ?? 0), 0);
-  const totalPrevisto = tasks.reduce((s, t) => s + (t.tempoPrevisto ?? 0), 0);
+  const totalEstimado = round2(tasks.reduce((s, t) => s + (t.tempoEstimado ?? 0), 0));
+  const totalPrevisto = round2(tasks.reduce((s, t) => s + (t.tempoPrevisto ?? 0), 0));
   const comImpeditivo = tasks.filter((t) => t.impeditivo?.trim()).length;
 
   const statusBreakdown = (["concluido", "em_andamento", "pendente", "cancelado"] as const)

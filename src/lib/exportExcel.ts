@@ -1,5 +1,6 @@
 import type { Task } from "@/types";
 import { STATUS_LABELS, PRIORITY_LABELS } from "@/types";
+import { round2 } from "@/lib/operationalReportMetrics";
 
 export async function exportToExcel(tasks: Task[], filename = "relatorio-tarefas") {
   const XLSX = await import("xlsx");
@@ -48,8 +49,8 @@ export async function exportToExcel(tasks: Task[], filename = "relatorio-tarefas
     "Em Andamento": u.em_andamento,
     Pendentes: u.pendente,
     "Taxa de Conclusão (%)": u.total > 0 ? Math.round((u.concluido / u.total) * 100) : 0,
-    "Horas Estimadas": u.hEst,
-    "Horas Previstas": u.hPrev,
+    "Horas Estimadas": round2(u.hEst),
+    "Horas Previstas": round2(u.hPrev),
   }));
 
   // ── Sheet 3: Resumo por projeto ──
@@ -75,8 +76,8 @@ export async function exportToExcel(tasks: Task[], filename = "relatorio-tarefas
     "Em Andamento": p.em_andamento,
     Pendentes: p.pendente,
     "Taxa de Conclusão (%)": p.total > 0 ? Math.round((p.concluido / p.total) * 100) : 0,
-    "Horas Estimadas": p.hEst,
-    "Horas Previstas": p.hPrev,
+    "Horas Estimadas": round2(p.hEst),
+    "Horas Previstas": round2(p.hPrev),
   }));
 
   // ── Build workbook ──

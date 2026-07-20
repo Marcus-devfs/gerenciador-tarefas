@@ -5,7 +5,7 @@ import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNotasQuery, useCreateNota, useUpdateNota, useDeleteNota } from "@/hooks/useNotas";
 import { useSettingsQuery } from "@/hooks/useSettings";
-import { buildHoursSummary, resolveHorasContratadasMes } from "@/lib/operationalReportMetrics";
+import { buildHoursSummary, resolveHorasContratadasMes, round2 } from "@/lib/operationalReportMetrics";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import {
   CheckCircle2, Clock, ListTodo, AlertCircle, TrendingUp, Loader2,
@@ -522,7 +522,7 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
                 <AlertTriangle size={12} className="mt-0.5 shrink-0" />
                 <span>
                   {hoursSummary.alertLevel === "excedido"
-                    ? `Horas contratadas ultrapassadas em ${hoursSummary.horasComprometidas - hoursSummary.horasContratadas}h.`
+                    ? `Horas contratadas ultrapassadas em ${round2(hoursSummary.horasComprometidas - hoursSummary.horasContratadas)}h.`
                     : `${hoursSummary.percentual}% das horas contratadas já comprometidas (feitas + alocadas).`}
                 </span>
               </div>

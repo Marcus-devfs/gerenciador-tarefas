@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { buildCollaboratorData, buildProjectData } from "@/lib/reportMetrics";
-import { buildHoursSummary, resolveHorasContratadasMes } from "@/lib/operationalReportMetrics";
+import { buildHoursSummary, resolveHorasContratadasMes, round2 } from "@/lib/operationalReportMetrics";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid,
@@ -61,8 +61,8 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
   const pendente = tasks.filter((t) => t.status === "pendente").length;
   const cancelado = tasks.filter((t) => t.status === "cancelado").length;
   const taxa = total > 0 ? Math.round((concluido / total) * 100) : 0;
-  const totalEst = tasks.reduce((s, t) => s + (t.tempoEstimado ?? 0), 0);
-  const totalPrev = tasks.reduce((s, t) => s + (t.tempoPrevisto ?? 0), 0);
+  const totalEst = round2(tasks.reduce((s, t) => s + (t.tempoEstimado ?? 0), 0));
+  const totalPrev = round2(tasks.reduce((s, t) => s + (t.tempoPrevisto ?? 0), 0));
   const comImpeditivo = tasks.filter((t) => t.impeditivo && t.impeditivo.trim()).length;
 
   const statusPie = [
@@ -124,7 +124,7 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
         <KpiCard label="Canceladas" value={cancelado} icon={XCircle} accent="bg-red-500" />
         <KpiCard label="Com impeditivo" value={comImpeditivo} icon={AlertCircle} accent="bg-amber-500" />
         <KpiCard label="Total estimado" value={`${totalEst}h`} icon={Timer} accent="bg-violet-500" />
-        <KpiCard label="Total previsto" value={`${totalPrev}h`} sub={totalPrev > totalEst ? `+${totalPrev - totalEst}h acima do estimado` : undefined} icon={Timer} accent={totalPrev > totalEst ? "bg-amber-500" : "bg-brand-500"} />
+        <KpiCard label="Total previsto" value={`${totalPrev}h`} sub={totalPrev > totalEst ? `+${round2(totalPrev - totalEst)}h acima do estimado` : undefined} icon={Timer} accent={totalPrev > totalEst ? "bg-amber-500" : "bg-brand-500"} />
       </div>
 
       {/* Horas contratadas — indicador principal para consultoria e gestor */}
@@ -196,7 +196,7 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
                 <AlertTriangle size={12} className="mt-0.5 shrink-0" />
                 <span>
                   {hoursSummary.alertLevel === "excedido"
-                    ? `Horas contratadas ultrapassadas em ${hoursSummary.horasComprometidas - hoursSummary.horasContratadas}h neste mês (considerando o que já foi feito + o que está alocado).`
+                    ? `Horas contratadas ultrapassadas em ${round2(hoursSummary.horasComprometidas - hoursSummary.horasContratadas)}h neste mês (considerando o que já foi feito + o que está alocado).`
                     : `Já são ${hoursSummary.percentual}% das horas contratadas do mês comprometidas (feitas + alocadas). Pode ser hora de conversar sobre contratar mais horas.`}
                 </span>
               </div>
