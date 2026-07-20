@@ -1,15 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { buildCollaboratorData, buildProjectData } from "@/lib/reportMetrics";
-import { buildHoursSummary, resolveHorasContratadasMes, round2 } from "@/lib/operationalReportMetrics";
+import { buildHoursSummary, resolveHorasContratadasMes, round2, formatMonthLabel } from "@/lib/operationalReportMetrics";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid,
 } from "recharts";
-import { CheckCircle2, Clock, ListTodo, AlertCircle, XCircle, Timer, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Clock, ListTodo, AlertCircle, XCircle, Timer, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import ExportButtons from "@/components/export/ExportButtons";
 import OperationalReportButton from "@/components/export/OperationalReportButton";
 import { useSettingsQuery } from "@/hooks/useSettings";
@@ -74,8 +74,17 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
 
   const projectData = buildProjectData(tasks);
   const collaboratorData = buildCollaboratorData(tasks);
-  const horasContratadasMes = resolveHorasContratadasMes(settings);
-  const hoursSummary = buildHoursSummary(tasks, horasContratadasMes);
+
+  // Horas contratadas do mês atual — usado no botão de report operacional, independente do mês navegado no widget abaixo.
+  const horasContratadasMesAtual = resolveHorasContratadasMes(settings);
+
+  const [hoursMonth, setHoursMonth] = useState(() => new Date());
+  const horasContratadasMes = resolveHorasContratadasMes(settings, hoursMonth);
+  const hoursSummary = buildHoursSummary(tasks, horasContratadasMes, hoursMonth);
+  const isCurrentMonth = hoursMonth.getFullYear() === new Date().getFullYear() && hoursMonth.getMonth() === new Date().getMonth();
+  function shiftHoursMonth(delta: number) {
+    setHoursMonth((d) => new Date(d.getFullYear(), d.getMonth() + delta, 1));
+  }
 
   const tempoData = tasks
     .filter((t) => t.tempoEstimado || t.tempoPrevisto)
@@ -107,7 +116,7 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
             reporterEmail={userEmail}
             managerEmail={settings?.managerEmail}
             managerName={settings?.managerName}
-            horasContratadasMes={horasContratadasMes}
+            horasContratadasMes={horasContratadasMesAtual}
           />
           <ExportButtons tasks={tasks} exportRef={exportRef} filenamePrefix="relatorio" />
         </div>
@@ -129,7 +138,39 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
 
       {/* Horas contratadas — indicador principal para consultoria e gestor */}
       <div className="bg-white rounded-xl border border-surface-200 p-5">
-        <SectionTitle>Horas contratadas (mês)</SectionTitle>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <SectionTitle>Horas contratadas</SectionTitle>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => shiftHoursMonth(-1)}
+              className="p-1 rounded-lg hover:bg-surface-100 text-surface-400 transition-colors"
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs font-medium text-surface-600 min-w-[110px] text-center">
+              {formatMonthLabel(hoursMonth)}
+            </span>
+            <button
+              type="button"
+              onClick={() => shiftHoursMonth(1)}
+              className="p-1 rounded-lg hover:bg-surface-100 text-surface-400 transition-colors"
+              aria-label="Próximo mês"
+            >
+              <ChevronRight size={16} />
+            </button>
+            {!isCurrentMonth && (
+              <button
+                type="button"
+                onClick={() => setHoursMonth(new Date())}
+                className="ml-1 text-[11px] font-medium text-brand-600 hover:text-brand-700"
+              >
+                Hoje
+              </button>
+            )}
+          </div>
+        </div>
         {hoursSummary.horasContratadas === undefined ? (
           <div className="mt-3 flex flex-col items-center justify-center text-center py-8">
             <Timer size={22} className="text-surface-300 mb-2" />

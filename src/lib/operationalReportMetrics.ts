@@ -45,6 +45,11 @@ export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+export function formatMonthLabel(date: Date): string {
+  const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export function getBusinessDaysInMonth(date = new Date()): number {
   const year = date.getFullYear();
   const month = date.getMonth();

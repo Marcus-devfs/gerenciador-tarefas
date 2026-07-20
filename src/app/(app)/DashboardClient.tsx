@@ -5,7 +5,7 @@ import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNotasQuery, useCreateNota, useUpdateNota, useDeleteNota } from "@/hooks/useNotas";
 import { useSettingsQuery } from "@/hooks/useSettings";
-import { buildHoursSummary, resolveHorasContratadasMes, round2 } from "@/lib/operationalReportMetrics";
+import { buildHoursSummary, resolveHorasContratadasMes, round2, formatMonthLabel } from "@/lib/operationalReportMetrics";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import {
   CheckCircle2, Clock, ListTodo, AlertCircle, TrendingUp, Loader2,
@@ -470,7 +470,8 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Timer size={15} className="text-brand-600" />
-                <span className="text-sm font-semibold text-surface-700">Horas contratadas (mês)</span>
+                <span className="text-sm font-semibold text-surface-700">Horas contratadas</span>
+                <span className="text-[11px] text-surface-400">— {formatMonthLabel(new Date())}</span>
               </div>
               <span className="text-[11px] text-brand-500 font-medium">Ver relatório →</span>
             </div>
