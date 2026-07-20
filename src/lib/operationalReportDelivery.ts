@@ -22,8 +22,9 @@ export async function tryShareFiles(
   try {
     await navigator.share(payload);
     return true;
-  } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") return true;
+  } catch {
+    // Inclui AbortError (usuário cancelou a caixa de compartilhamento) — nesse caso nada foi
+    // de fato enviado, então deve cair no fallback (.eml + anexos manuais), não ser tratado como sucesso.
     return false;
   }
 }

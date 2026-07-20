@@ -40,7 +40,7 @@ const STEP_LABELS: Record<Exclude<Step, "idle" | "done">, string> = {
   "pdf-indicadores": "Gerando PDF de indicadores…",
   "pdf-relatorio": "Capturando relatório visual…",
   eml: "Montando e-mail com anexos…",
-  email: "Abrindo Outlook Classic…",
+  email: "Abrindo menu de envio…",
 };
 
 export default function OperationalReportButton({
