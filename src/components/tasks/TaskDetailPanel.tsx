@@ -16,13 +16,13 @@ import TimeInput from "./TimeInput";
 
 // ── constants ────────────────────────────────────────────────────────
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
-  { value: "pendente",     label: "Pendente"      },
-  { value: "em_andamento", label: "Em andamento"  },
-  { value: "concluido",    label: "Concluído"     },
-  { value: "cancelado",    label: "Cancelado"     },
+  { value: "pendente", label: "Pendente" },
+  { value: "em_andamento", label: "Em andamento" },
+  { value: "concluido", label: "Concluído" },
+  { value: "cancelado", label: "Cancelado" },
 ];
 const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
-  { value: "alta",  label: "Alta"  },
+  { value: "alta", label: "Alta" },
   { value: "media", label: "Média" },
   { value: "baixa", label: "Baixa" },
 ];
@@ -103,9 +103,8 @@ function QuickNoteForm({ tarefaId, tarefaTitulo }: { tarefaId: string; tarefaTit
             <button
               key={t}
               onClick={() => setTipo(t)}
-              className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${
-                tipo === t ? `${c.bg} ${c.text} border-current` : "bg-white text-surface-400 border-surface-200"
-              }`}
+              className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${tipo === t ? `${c.bg} ${c.text} border-current` : "bg-white text-surface-400 border-surface-200"
+                }`}
             >
               {c.icon} {NOTE_TYPE_LABEL[t]}
             </button>
@@ -119,8 +118,8 @@ function QuickNoteForm({ tarefaId, tarefaTitulo }: { tarefaId: string; tarefaTit
         onKeyDown={(e) => e.key === "Enter" && handleSave()}
         placeholder={
           tipo === "lembrete" ? "ex: Envio de relatório..." :
-          tipo === "reuniao"  ? "ex: Reunião de alinhamento..." :
-          "Título da anotação..."
+            tipo === "reuniao" ? "ex: Reunião de alinhamento..." :
+              "Título da anotação..."
         }
         className="w-full px-2.5 py-1.5 text-xs border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
       />
@@ -277,12 +276,12 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
             {readOnly ? (
               <h2 className="text-base font-bold text-surface-900 px-1 py-0.5">{title}</h2>
             ) : (
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => { if (title.trim() && title !== task.title) save({ title }); }}
-              className="w-full text-base font-bold text-surface-900 bg-transparent border-none outline-none focus:bg-surface-50 rounded-lg px-1 py-0.5 -mx-1 transition-colors"
-            />
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={() => { if (title.trim() && title !== task.title) save({ title }); }}
+                className="w-full text-base font-bold text-surface-900 bg-transparent border-none outline-none focus:bg-surface-50 rounded-lg px-1 py-0.5 -mx-1 transition-colors"
+              />
             )}
 
             {/* Pills */}
@@ -297,29 +296,29 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
                   </span>
                 </>
               ) : (
-              <>
-              <select
-                value={task.status}
-                onChange={(e) => save({ status: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
-                className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border-none outline-none cursor-pointer ${STATUS_PILL[task.status]}`}
-              >
-                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+                <>
+                  <select
+                    value={task.status}
+                    onChange={(e) => save({ status: e.target.value })}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border-none outline-none cursor-pointer ${STATUS_PILL[task.status]}`}
+                  >
+                    {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
 
-              <select
-                value={task.priority}
-                onChange={(e) => save({ priority: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
-                className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border-none outline-none cursor-pointer ${PRIORITY_PILL[task.priority]}`}
-              >
-                {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+                  <select
+                    value={task.priority}
+                    onChange={(e) => save({ priority: e.target.value })}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border-none outline-none cursor-pointer ${PRIORITY_PILL[task.priority]}`}
+                  >
+                    {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
 
-              {task.projeto && (
-                <span className="text-[11px] bg-surface-100 text-surface-600 px-2 py-0.5 rounded-full font-medium">{task.projeto}</span>
-              )}
-              </>
+                  {task.projeto && (
+                    <span className="text-[11px] bg-surface-100 text-surface-600 px-2 py-0.5 rounded-full font-medium">{task.projeto}</span>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -329,18 +328,33 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
 
           {/* Situação atual */}
+
+          <Section title="Descrição">
+            {readOnly ? (
+              <p className="text-sm text-surface-700 whitespace-pre-wrap">{task.description || "—"}</p>
+            ) : (
+              <textarea
+                value={task.description || ""}
+                onChange={(e) => save({ description: e.target.value })}
+                rows={3}
+                placeholder="Descreva a tarefa..."
+                className="w-full px-3 py-2 text-sm text-surface-700 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 resize-none"
+              />
+            )}
+          </Section>
+
           <Section title="Situação atual">
             {readOnly ? (
               <p className="text-sm text-surface-700 whitespace-pre-wrap">{situacaoAtual || "—"}</p>
             ) : (
-            <textarea
-              value={situacaoAtual}
-              onChange={(e) => setSituacaoAtual(e.target.value)}
-              onBlur={() => save({ situacaoAtual })}
-              rows={3}
-              placeholder="O que está acontecendo com essa tarefa agora?"
-              className="w-full px-3 py-2 text-sm text-surface-700 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 resize-none"
-            />
+              <textarea
+                value={situacaoAtual}
+                onChange={(e) => setSituacaoAtual(e.target.value)}
+                onBlur={() => save({ situacaoAtual })}
+                rows={3}
+                placeholder="O que está acontecendo com essa tarefa agora?"
+                className="w-full px-3 py-2 text-sm text-surface-700 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 resize-none"
+              />
             )}
           </Section>
 
@@ -349,18 +363,18 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
             {readOnly ? (
               <p className={`text-sm ${impeditivo ? "text-amber-700" : "text-surface-400"}`}>{impeditivo || "—"}</p>
             ) : (
-            <div className="relative">
-              {impeditivo && (
-                <AlertTriangle size={13} className="absolute left-3 top-2.5 text-amber-500 shrink-0" />
-              )}
-              <input
-                value={impeditivo}
-                onChange={(e) => setImpeditivo(e.target.value)}
-                onBlur={() => save({ impeditivo })}
-                placeholder="Algum bloqueio? Deixe em branco se não houver."
-                className={`w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 ${impeditivo ? "pl-8 text-amber-700" : ""}`}
-              />
-            </div>
+              <div className="relative">
+                {impeditivo && (
+                  <AlertTriangle size={13} className="absolute left-3 top-2.5 text-amber-500 shrink-0" />
+                )}
+                <input
+                  value={impeditivo}
+                  onChange={(e) => setImpeditivo(e.target.value)}
+                  onBlur={() => save({ impeditivo })}
+                  placeholder="Algum bloqueio? Deixe em branco se não houver."
+                  className={`w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 ${impeditivo ? "pl-8 text-amber-700" : ""}`}
+                />
+              </div>
             )}
           </Section>
 
@@ -373,24 +387,24 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
                 <span>{task.category || "Sem categoria"}</span>
               </div>
             ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={task.projeto ?? ""}
-                onChange={(e) => save({ projeto: e.target.value || undefined })}
-                className="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-              >
-                <option value="">Sem projeto</option>
-                {projects.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
-              </select>
-              <select
-                value={task.category ?? ""}
-                onChange={(e) => save({ category: e.target.value || undefined })}
-                className="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-              >
-                <option value="">Sem categoria</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={task.projeto ?? ""}
+                  onChange={(e) => save({ projeto: e.target.value || undefined })}
+                  className="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                >
+                  <option value="">Sem projeto</option>
+                  {projects.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
+                </select>
+                <select
+                  value={task.category ?? ""}
+                  onChange={(e) => save({ category: e.target.value || undefined })}
+                  className="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                >
+                  <option value="">Sem categoria</option>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
             )}
           </Section>
 
@@ -407,12 +421,12 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
                   {readOnly ? (
                     <p className="text-xs text-surface-600">{value || "—"}</p>
                   ) : (
-                  <input
-                    type="date"
-                    defaultValue={value ?? ""}
-                    onChange={(e) => save({ [field]: e.target.value || undefined })}
-                    className="w-full text-xs border border-surface-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
+                    <input
+                      type="date"
+                      defaultValue={value ?? ""}
+                      onChange={(e) => save({ [field]: e.target.value || undefined })}
+                      className="w-full text-xs border border-surface-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                    />
                   )}
                 </div>
               ))}
@@ -427,32 +441,31 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
                 <span>Previsto: {tempoPrevisto ? `${tempoPrevisto}h` : "—"}</span>
               </div>
             ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-[10px] text-surface-400 mb-1">Estimado</p>
-                <TimeInput
-                  value={tempoEstimado}
-                  onChange={setTempoEstimado}
-                  onBlur={() => save({ tempoEstimado: tempoEstimado ? Number(tempoEstimado) : undefined })}
-                  inputClassName="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  placeholder="ex: 40"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[10px] text-surface-400 mb-1">Estimado</p>
+                  <TimeInput
+                    value={tempoEstimado}
+                    onChange={setTempoEstimado}
+                    onBlur={() => save({ tempoEstimado: tempoEstimado ? Number(tempoEstimado) : undefined })}
+                    inputClassName="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                    placeholder="ex: 40"
+                  />
+                </div>
+                <div>
+                  <p className="text-[10px] text-surface-400 mb-1">Previsto</p>
+                  <TimeInput
+                    value={tempoPrevisto}
+                    onChange={setTempoPrevisto}
+                    onBlur={() => save({ tempoPrevisto: tempoPrevisto ? Number(tempoPrevisto) : undefined })}
+                    inputClassName={`text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30 ${tempoPrevisto && tempoEstimado && Number(tempoPrevisto) > Number(tempoEstimado)
+                        ? "border-amber-300 text-amber-700 bg-amber-50"
+                        : "border-surface-200"
+                      }`}
+                    placeholder="ex: 48"
+                  />
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-surface-400 mb-1">Previsto</p>
-                <TimeInput
-                  value={tempoPrevisto}
-                  onChange={setTempoPrevisto}
-                  onBlur={() => save({ tempoPrevisto: tempoPrevisto ? Number(tempoPrevisto) : undefined })}
-                  inputClassName={`text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30 ${
-                    tempoPrevisto && tempoEstimado && Number(tempoPrevisto) > Number(tempoEstimado)
-                      ? "border-amber-300 text-amber-700 bg-amber-50"
-                      : "border-surface-200"
-                  }`}
-                  placeholder="ex: 48"
-                />
-              </div>
-            </div>
             )}
           </Section>
 
@@ -460,13 +473,13 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
           <Section title={`Progresso — ${progress}%`}>
             <div className="flex items-center gap-3">
               {!readOnly && (
-              <input
-                type="range" min={0} max={100}
-                value={progress}
-                onChange={(e) => setProgress(Number(e.target.value))}
-                onPointerUp={() => save({ progress })}
-                className="flex-1 accent-brand-500 h-2"
-              />
+                <input
+                  type="range" min={0} max={100}
+                  value={progress}
+                  onChange={(e) => setProgress(Number(e.target.value))}
+                  onPointerUp={() => save({ progress })}
+                  className="flex-1 accent-brand-500 h-2"
+                />
               )}
               {readOnly && <div className="flex-1" />}
               <span className="text-sm font-bold text-brand-600 tabular-nums w-10 text-right">{progress}%</span>
@@ -490,46 +503,46 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
                       )}
                     </div>
                   ) : (
-                  <button onClick={() => toggleSub(sub.id)} type="button" className="shrink-0">
-                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${sub.status === "concluido" ? "bg-brand-500 border-brand-500" : "border-surface-300"}`}>
-                      {sub.status === "concluido" && (
-                        <svg width="9" height="7" fill="none" viewBox="0 0 9 7">
-                          <path d="M1 3.5l2.5 2.5 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </div>
-                  </button>
+                    <button onClick={() => toggleSub(sub.id)} type="button" className="shrink-0">
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${sub.status === "concluido" ? "bg-brand-500 border-brand-500" : "border-surface-300"}`}>
+                        {sub.status === "concluido" && (
+                          <svg width="9" height="7" fill="none" viewBox="0 0 9 7">
+                            <path d="M1 3.5l2.5 2.5 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
                   )}
                   <span className={`flex-1 text-xs ${sub.status === "concluido" ? "line-through text-surface-400" : "text-surface-700"}`}>{sub.title}</span>
                   {!readOnly && (
-                  <button
-                    onClick={() => removeSub(sub.id)}
-                    type="button"
-                    className="p-1 rounded hover:bg-red-50 text-surface-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <Trash2 size={11} />
-                  </button>
+                    <button
+                      onClick={() => removeSub(sub.id)}
+                      type="button"
+                      className="p-1 rounded hover:bg-red-50 text-surface-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 size={11} />
+                    </button>
                   )}
                 </div>
               ))}
             </div>
             {!readOnly && (
-            <div className="flex gap-2">
-              <input
-                value={newSub}
-                onChange={(e) => setNewSub(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSubtask())}
-                placeholder="Adicionar subtarefa..."
-                className="flex-1 text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-              />
-              <button
-                onClick={addSubtask}
-                type="button"
-                className="px-2.5 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-600 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
-              >
-                <Plus size={11} /> Add
-              </button>
-            </div>
+              <div className="flex gap-2">
+                <input
+                  value={newSub}
+                  onChange={(e) => setNewSub(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSubtask())}
+                  placeholder="Adicionar subtarefa..."
+                  className="flex-1 text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                />
+                <button
+                  onClick={addSubtask}
+                  type="button"
+                  className="px-2.5 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-600 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                >
+                  <Plus size={11} /> Add
+                </button>
+              </div>
             )}
           </Section>
 
@@ -550,13 +563,12 @@ export default function TaskDetailPanel({ task, taskIndex, taskCount, onClose, o
                   return (
                     <div
                       key={nota.id}
-                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-colors ${
-                        nota.tipo === "lembrete"
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-colors ${nota.tipo === "lembrete"
                           ? "bg-purple-50 border-purple-100"
                           : nota.tipo === "reuniao"
-                          ? "bg-blue-50 border-blue-100"
-                          : "bg-amber-50 border-amber-100"
-                      }`}
+                            ? "bg-blue-50 border-blue-100"
+                            : "bg-amber-50 border-amber-100"
+                        }`}
                     >
                       <span className="text-base shrink-0 mt-0.5">{c.icon}</span>
                       <div className="flex-1 min-w-0">

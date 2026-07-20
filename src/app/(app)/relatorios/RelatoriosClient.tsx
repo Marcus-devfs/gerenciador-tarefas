@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { buildCollaboratorData, buildProjectData } from "@/lib/reportMetrics";
-import { buildHoursSummary, resolveHorasContratadasMes, round2, formatMonthLabel } from "@/lib/operationalReportMetrics";
+import { resolveHorasContratadasMes, resolveScopedHours, round2, formatMonthLabel } from "@/lib/operationalReportMetrics";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid,
@@ -52,7 +52,8 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
   const exportRef = useRef<HTMLDivElement>(null);
   const { data: allTasks = [] } = useTasksQuery();
   const { data: settings } = useSettingsQuery();
-  const { isTeamLeader, canViewTeam, teamLabel } = useUserRole(isAdmin);
+  const { isTeamLeader, canViewTeam, teamLabel, subordinates } = useUserRole(isAdmin);
+  const [collaboratorId, setCollaboratorId] = useState("");
   const tasks = allTasks;
 
   const total = tasks.length;
@@ -75,16 +76,29 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
   const projectData = buildProjectData(tasks);
   const collaboratorData = buildCollaboratorData(tasks);
 
+
   // Horas contratadas do mês atual — usado no botão de report operacional, independente do mês navegado no widget abaixo.
   const horasContratadasMesAtual = resolveHorasContratadasMes(settings);
 
   const [hoursMonth, setHoursMonth] = useState(() => new Date());
-  const horasContratadasMes = resolveHorasContratadasMes(settings, hoursMonth);
-  const hoursSummary = buildHoursSummary(tasks, horasContratadasMes, hoursMonth);
+  const { summary: hoursSummary, state: hoursState, scopeLabel: hoursScopeLabel } = resolveScopedHours({
+    isTeamLeader,
+    tasks,
+    ownSettings: settings,
+    subordinates,
+    collaboratorId,
+    ref: hoursMonth,
+  });
   const isCurrentMonth = hoursMonth.getFullYear() === new Date().getFullYear() && hoursMonth.getMonth() === new Date().getMonth();
   function shiftHoursMonth(delta: number) {
     setHoursMonth((d) => new Date(d.getFullYear(), d.getMonth() + delta, 1));
   }
+
+  useEffect(() => {
+    if (isTeamLeader) {
+      setCollaboratorId(subordinates.length > 0 ? subordinates[0].id : "");
+    }
+  }, [isTeamLeader]);
 
   const tempoData = tasks
     .filter((t) => t.tempoEstimado || t.tempoPrevisto)
@@ -139,7 +153,23 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
       {/* Horas contratadas — indicador principal para consultoria e gestor */}
       <div className="bg-white rounded-xl border border-surface-200 p-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <SectionTitle>Horas contratadas</SectionTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <SectionTitle>Horas contratadas</SectionTitle>
+            {hoursScopeLabel && <span className="text-xs text-surface-400">— {hoursScopeLabel}</span>}
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            {isTeamLeader && subordinates.length > 0 && (
+              <select
+                value={collaboratorId}
+                onChange={(e) => setCollaboratorId(e.target.value)}
+                className="text-xs border border-surface-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              >
+                <option value="">Selecione um colaborador</option>
+                {subordinates.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            )}
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -170,8 +200,23 @@ export default function RelatoriosClient({ isAdmin, userEmail, userName }: Props
               </button>
             )}
           </div>
+          </div>
         </div>
-        {hoursSummary.horasContratadas === undefined ? (
+        {hoursState === "needs-selection" ? (
+          <div className="mt-3 flex flex-col items-center justify-center text-center py-8">
+            <Timer size={22} className="text-surface-300 mb-2" />
+            <p className="text-xs text-surface-400 max-w-[260px]">
+              Selecione um colaborador para ver as horas contratadas.
+            </p>
+          </div>
+        ) : hoursState === "no-hours-configured" ? (
+          <div className="mt-3 flex flex-col items-center justify-center text-center py-8">
+            <Timer size={22} className="text-surface-300 mb-2" />
+            <p className="text-xs text-surface-400 max-w-[260px]">
+              Esse colaborador ainda não tem horas contratadas configuradas.
+            </p>
+          </div>
+        ) : hoursSummary.horasContratadas === undefined ? (
           <div className="mt-3 flex flex-col items-center justify-center text-center py-8">
             <Timer size={22} className="text-surface-300 mb-2" />
             <p className="text-xs text-surface-400 max-w-[260px]">

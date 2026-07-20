@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useTasksQuery } from "@/hooks/useTasks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNotasQuery, useCreateNota, useUpdateNota, useDeleteNota } from "@/hooks/useNotas";
 import { useSettingsQuery } from "@/hooks/useSettings";
-import { buildHoursSummary, resolveHorasContratadasMes, round2, formatMonthLabel } from "@/lib/operationalReportMetrics";
+import { resolveScopedHours, round2, formatMonthLabel } from "@/lib/operationalReportMetrics";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import {
   CheckCircle2, Clock, ListTodo, AlertCircle, TrendingUp, Loader2,
@@ -359,7 +359,7 @@ function NotaDrawer({
 // ── Main ──────────────────────────────────────────────────────────────
 export default function DashboardClient({ isAdmin, userEmail }: Props) {
   const { data: allTasks = [], isLoading } = useTasksQuery();
-  const { isTeamLeader, canViewTeam, teamLabel } = useUserRole(isAdmin);
+  const { isTeamLeader, canViewTeam, teamLabel, subordinates } = useUserRole(isAdmin);
   const { data: notas = [] } = useNotasQuery();
   const { data: settings } = useSettingsQuery();
   const deleteNota = useDeleteNota();
@@ -367,6 +367,7 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
 
   const [notaDrawer, setNotaDrawer] = useState<Note | null | "new">(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [collaboratorId, setCollaboratorId] = useState("");
 
   const todayStr = getTodayStr();
   const todayDow = getTodayDow();
@@ -381,7 +382,13 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
     ? Math.round(visibleTasks.reduce((acc, t) => acc + t.progress, 0) / total)
     : 0;
 
-  const hoursSummary = buildHoursSummary(visibleTasks, resolveHorasContratadasMes(settings));
+  const { summary: hoursSummary, state: hoursState, scopeLabel: hoursScopeLabel } = resolveScopedHours({
+    isTeamLeader,
+    tasks: visibleTasks,
+    ownSettings: settings,
+    subordinates,
+    collaboratorId,
+  });
 
   const recentTasks = [...visibleTasks]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -397,6 +404,12 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
       }),
     [notas, todayStr, todayDow]
   );
+
+  useEffect(() => {
+    if (isTeamLeader && subordinates.length > 0) {
+      setCollaboratorId(subordinates[0].id);
+    }
+  }, [isTeamLeader, subordinates]);
 
   // Mapa taskId → notas vinculadas
   const notasByTask = useMemo(() => {
@@ -464,72 +477,106 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
       </div>
 
       {/* Horas contratadas do mês */}
-      {hoursSummary.horasContratadas !== undefined && (
-        <Link href="/relatorios" className="block">
-          <div className="bg-white rounded-xl border border-surface-200 p-4 hover:border-brand-400/50 hover:shadow-sm transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Timer size={15} className="text-brand-600" />
-                <span className="text-sm font-semibold text-surface-700">Horas contratadas</span>
-                <span className="text-[11px] text-surface-400">— {formatMonthLabel(new Date())}</span>
-              </div>
-              <span className="text-[11px] text-brand-500 font-medium">Ver relatório →</span>
+      {(isTeamLeader || hoursSummary.horasContratadas !== undefined) && (
+        <div className="bg-white rounded-xl border border-surface-200 p-4">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Timer size={15} className="text-brand-600" />
+              <span className="text-sm font-semibold text-surface-700">Horas contratadas</span>
+              <span className="text-[11px] text-surface-400">
+                — {hoursScopeLabel ? `${hoursScopeLabel} · ` : ""}{formatMonthLabel(new Date())}
+              </span>
             </div>
-
-            <div className="flex h-2 rounded-full overflow-hidden bg-surface-100 mb-3">
-              <div
-                className="h-full"
-                style={{
-                  width: `${Math.min(100, (hoursSummary.horasFeitas / hoursSummary.horasContratadas) * 100)}%`,
-                  background: hoursSummary.alertLevel === "excedido" ? "#dc2626" : hoursSummary.alertLevel === "atencao" ? "#d97706" : "#f39519",
-                }}
-              />
-              <div
-                className="h-full bg-[#fcd9a8]"
-                style={{
-                  width: `${Math.min(100 - (hoursSummary.horasFeitas / hoursSummary.horasContratadas) * 100, (hoursSummary.horasAlocadas / hoursSummary.horasContratadas) * 100)}%`,
-                }}
-              />
+            <div className="flex items-center gap-2">
+              {isTeamLeader && subordinates.length > 0 && (
+                <select
+                  value={collaboratorId}
+                  onChange={(e) => setCollaboratorId(e.target.value)}
+                  className="text-xs border border-surface-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                >
+                  <option value="">Selecione um colaborador</option>
+                  {subordinates.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              )}
+              <Link href="/relatorios" className="text-[11px] text-brand-500 font-medium hover:text-brand-600 shrink-0">
+                Ver relatório →
+              </Link>
             </div>
-
-            <div className="flex gap-6">
-              <div>
-                <p className="text-lg font-bold text-surface-900">{hoursSummary.horasFeitas}h</p>
-                <p className="text-[11px] text-surface-400">Feitas</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-amber-600">{hoursSummary.horasAlocadas}h</p>
-                <p className="text-[11px] text-surface-400">Alocadas</p>
-              </div>
-              <div>
-                <p className={`text-lg font-bold ${
-                  hoursSummary.alertLevel === "excedido" ? "text-red-600" :
-                  hoursSummary.alertLevel === "atencao" ? "text-amber-600" : "text-blue-600"
-                }`}>{hoursSummary.horasRestantes}h</p>
-                <p className="text-[11px] text-surface-400">Restantes</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-surface-900">{hoursSummary.horasContratadas}h</p>
-                <p className="text-[11px] text-surface-400">Contratadas</p>
-              </div>
-            </div>
-
-            {hoursSummary.alertLevel !== "ok" && (
-              <div className={`mt-3 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] ${
-                hoursSummary.alertLevel === "excedido"
-                  ? "bg-red-50 border-red-200 text-red-700"
-                  : "bg-amber-50 border-amber-200 text-amber-700"
-              }`}>
-                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-                <span>
-                  {hoursSummary.alertLevel === "excedido"
-                    ? `Horas contratadas ultrapassadas em ${round2(hoursSummary.horasComprometidas - hoursSummary.horasContratadas)}h.`
-                    : `${hoursSummary.percentual}% das horas contratadas já comprometidas (feitas + alocadas).`}
-                </span>
-              </div>
-            )}
           </div>
-        </Link>
+
+          {hoursState === "needs-selection" ? (
+            <div className="flex flex-col items-center justify-center text-center py-6">
+              <Timer size={20} className="text-surface-300 mb-2" />
+              <p className="text-xs text-surface-400 max-w-[260px]">
+                Selecione um colaborador para ver as horas contratadas.
+              </p>
+            </div>
+          ) : hoursState === "no-hours-configured" ? (
+            <div className="flex flex-col items-center justify-center text-center py-6">
+              <Timer size={20} className="text-surface-300 mb-2" />
+              <p className="text-xs text-surface-400 max-w-[260px]">
+                Esse colaborador ainda não tem horas contratadas configuradas.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex h-2 rounded-full overflow-hidden bg-surface-100 mb-3">
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${Math.min(100, (hoursSummary.horasFeitas / hoursSummary.horasContratadas!) * 100)}%`,
+                    background: hoursSummary.alertLevel === "excedido" ? "#dc2626" : hoursSummary.alertLevel === "atencao" ? "#d97706" : "#f39519",
+                  }}
+                />
+                <div
+                  className="h-full bg-[#fcd9a8]"
+                  style={{
+                    width: `${Math.min(100 - (hoursSummary.horasFeitas / hoursSummary.horasContratadas!) * 100, (hoursSummary.horasAlocadas / hoursSummary.horasContratadas!) * 100)}%`,
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-6">
+                <div>
+                  <p className="text-lg font-bold text-surface-900">{hoursSummary.horasFeitas}h</p>
+                  <p className="text-[11px] text-surface-400">Feitas</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-amber-600">{hoursSummary.horasAlocadas}h</p>
+                  <p className="text-[11px] text-surface-400">Alocadas</p>
+                </div>
+                <div>
+                  <p className={`text-lg font-bold ${
+                    hoursSummary.alertLevel === "excedido" ? "text-red-600" :
+                    hoursSummary.alertLevel === "atencao" ? "text-amber-600" : "text-blue-600"
+                  }`}>{hoursSummary.horasRestantes}h</p>
+                  <p className="text-[11px] text-surface-400">Restantes</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-surface-900">{hoursSummary.horasContratadas}h</p>
+                  <p className="text-[11px] text-surface-400">Contratadas</p>
+                </div>
+              </div>
+
+              {hoursSummary.alertLevel !== "ok" && (
+                <div className={`mt-3 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] ${
+                  hoursSummary.alertLevel === "excedido"
+                    ? "bg-red-50 border-red-200 text-red-700"
+                    : "bg-amber-50 border-amber-200 text-amber-700"
+                }`}>
+                  <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                  <span>
+                    {hoursSummary.alertLevel === "excedido"
+                      ? `Horas contratadas ultrapassadas em ${round2(hoursSummary.horasComprometidas - hoursSummary.horasContratadas!)}h.`
+                      : `${hoursSummary.percentual}% das horas contratadas já comprometidas (feitas + alocadas).`}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {/* Charts (gestor/admin) or progress bar (personal) */}
@@ -574,7 +621,7 @@ export default function DashboardClient({ isAdmin, userEmail }: Props) {
                           {canViewTeam && (
                             <p className="text-xs text-brand-600 font-medium">{task.assignedToName}</p>
                           )}
-                          <p className="text-xs text-surface-400">Atualizado {task.updatedAt}</p>
+                          <p className="text-xs text-surface-400">Atualizado {task.dataEntrega || task.updatedAt}</p>
                           {taskNotas.length > 0 && (
                             <button
                               onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}

@@ -159,6 +159,58 @@ export function buildHoursSummary(
   };
 }
 
+export type HoursScopeState = "own" | "needs-selection" | "no-hours-configured" | "ready";
+
+export interface ScopedHoursResult {
+  summary: HoursSummary;
+  state: HoursScopeState;
+  scopeLabel?: string;
+}
+
+interface SubordinateHours {
+  id: string;
+  name: string;
+  horasContratadasMes?: number;
+  horasContratadasDia?: number;
+}
+
+/**
+ * Resolves which hours summary to show for the "Horas contratadas" widget.
+ * For a team leader, the widget must reflect a specific collaborator's own contracted
+ * hours (never the manager's), so it requires an explicit collaboratorId selection.
+ */
+export function resolveScopedHours(params: {
+  isTeamLeader: boolean;
+  tasks: Task[];
+  ownSettings?: { horasContratadasDia?: number; horasContratadasMes?: number };
+  subordinates: SubordinateHours[];
+  collaboratorId: string;
+  ref?: Date;
+}): ScopedHoursResult {
+  const { isTeamLeader, tasks, ownSettings, subordinates, collaboratorId, ref } = params;
+
+  if (!isTeamLeader) {
+    const horasContratadasMes = resolveHorasContratadasMes(ownSettings, ref);
+    const summary = buildHoursSummary(tasks, horasContratadasMes, ref);
+    return { summary, state: "own" };
+  }
+
+  if (!collaboratorId) {
+    return { summary: buildHoursSummary([], undefined, ref), state: "needs-selection" };
+  }
+
+  const collaborator = subordinates.find((s) => s.id === collaboratorId);
+  const scopedTasks = tasks.filter((t) => t.assignedUserId === collaboratorId);
+  const horasContratadasMes = resolveHorasContratadasMes(collaborator, ref);
+  const summary = buildHoursSummary(scopedTasks, horasContratadasMes, ref);
+
+  return {
+    summary,
+    state: horasContratadasMes === undefined ? "no-hours-configured" : "ready",
+    scopeLabel: collaborator?.name,
+  };
+}
+
 export function formatShortDate(dateStr?: string) {
   if (!dateStr?.trim()) return "—";
   const date = parseDateOnly(dateStr);

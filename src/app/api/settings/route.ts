@@ -24,6 +24,8 @@ async function buildSettingsResponse(
       id: (s.userId as ObjectId).toHexString(),
       email: s.email ?? "",
       name: s.name ?? emailToName(s.email ?? ""),
+      horasContratadasMes: s.horasContratadasMes as number | undefined,
+      horasContratadasDia: s.horasContratadasDia as number | undefined,
     })),
   };
 }

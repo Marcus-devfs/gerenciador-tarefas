@@ -23,5 +23,11 @@ export interface UserSettings {
 export interface UserSettingsResponse extends UserSettings {
   isManager: boolean;
   hasPassword: boolean;
-  subordinates: { id: string; email: string; name: string }[];
+  subordinates: {
+    id: string;
+    email: string;
+    name: string;
+    horasContratadasMes?: number;
+    horasContratadasDia?: number;
+  }[];
 }
